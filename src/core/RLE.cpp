@@ -47,7 +47,7 @@ string RLE::encode(const string &input)
     string encoded = "";
     size_t i = 0;
     string currentChar = getUTF8Char(input, i);
-    int count = 1;
+    long long count = 1;
 
     while (i < input.size())
     {
@@ -70,6 +70,7 @@ string RLE::decode(const string &input)
 {
     string decoded = "";
     size_t i = 0;
+    const size_t maxSize = 100000000; // 100 MB limit
 
     while (i < input.size())
     {
@@ -87,13 +88,34 @@ string RLE::decode(const string &input)
             continue;
         }
 
-        int count = stoi(num);
+        long long count = stoll(num);
 
         // Read UTF-8 char
         string ch = getUTF8Char(input, i);
 
-        for (int j = 0; j < count; j++)
-            decoded += ch;
+        // Check if adding this would exceed memory limit
+        if (decoded.size() + (size_t)(ch.length() * count) > maxSize)
+        {
+            break; // Stop decoding if output would be too large
+        }
+
+        // Efficiently repeat the character in smaller chunks
+        if (count > 0)
+        {
+            const long long chunkSize = 10000;
+            while (count > chunkSize)
+            {
+                string chunk;
+                chunk.reserve(ch.length() * chunkSize);
+                for (long long j = 0; j < chunkSize; j++)
+                    chunk += ch;
+                decoded += chunk;
+                count -= chunkSize;
+            }
+            // Append remaining
+            for (long long j = 0; j < count; j++)
+                decoded += ch;
+        }
     }
 
     return decoded;
