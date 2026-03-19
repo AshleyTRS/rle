@@ -80,6 +80,13 @@ string RLE::decode(const string &input)
             num += input[i++];
         }
 
+        // Skip if no number was found
+        if (num.empty())
+        {
+            getUTF8Char(input, i);
+            continue;
+        }
+
         int count = stoi(num);
 
         // Read UTF-8 char
